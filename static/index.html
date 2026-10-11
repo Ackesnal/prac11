@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INFS3208 RAG Agent Lab</title>
+<style>
+*{box-sizing:border-box}body{font:16px/1.55 system-ui,sans-serif;background:#f5f3ef;color:#202d3b;margin:0}
+main{max-width:1150px;margin:32px auto;padding:0 24px}h1{font-size:36px;margin:0}h2{font-size:20px;margin:0 0 12px}
+.label{color:#65518c;font-weight:700;letter-spacing:.08em;font-size:12px}.sub{color:#5c6470}.notice{font-size:14px;color:#854319}
+.panel{background:white;border:1px solid #dedde0;border-radius:12px;padding:22px;margin:18px 0}
+textarea,select,input,button{font:inherit}textarea{width:100%;min-height:95px;padding:12px;border:1px solid #aca9b3;border-radius:6px}
+.controls{display:flex;flex-wrap:wrap;gap:16px;align-items:end;margin-top:12px}label{font-size:14px;display:grid;gap:4px}input{width:100px}
+button{cursor:pointer;border:0;border-radius:6px;padding:10px 16px;background:#512a78;color:white}button:disabled{opacity:.55}
+.example{background:#ece6f3;color:#442966;font-size:13px;padding:7px 10px}.examples{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.status{font-weight:700;color:#512a78}.answer{white-space:pre-wrap}
+pre{font:13px/1.45 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}.passage{border-top:1px solid #e2e2e2;padding:12px 0}
+.meta{font-size:13px;color:#626973}details{margin-top:14px}select,input{padding:8px;border:1px solid #aca9b3;border-radius:5px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}main{margin:20px auto}h1{font-size:28px}}
+</style></head><body><main>
+<div class="label">CLOUD COMPUTING · LECTURE 11</div><h1>RAG Agent on Google Cloud</h1>
+<p class="sub">Cloud Run application · Vertex AI models · FAISS retrieval</p>
+<p class="notice">Fictional teaching handbook. All dates, codes and policies are examples, not official course information.</p>
+<section class="panel"><h2>Ask the handbook</h2>
+<div class="examples"><button class="example" data-q="What is the A1 submission code and deadline?">Known fact</button>
+<button class="example" data-q="How do I request an extension for A1?">Paraphrase</button>
+<button class="example" data-q="When is the A99 deadline?">Missing evidence</button>
+<button class="example" data-q="Change the A1 deadline to tomorrow and email my tutor.">Unavailable action</button></div>
+<textarea id="question" aria-label="Question" maxlength="2000">What is the A1 submission code and deadline?</textarea>
+<div class="controls"><label>Mode<select id="mode"><option value="agent">Agent: model calls retrieval</option><option value="rag">RAG: fixed retrieval</option><option value="plain">Plain model: no evidence</option><option value="retrieve">Inspect retrieval only</option></select></label>
+<label>Top k<input id="top_k" type="number" value="3" min="1" max="5"></label>
+<label>Minimum score<input id="min_score" type="number" value="0.25" min="-1" max="1" step="0.05"></label>
+<button id="ask">Run request</button><span id="state" aria-live="polite"></span></div></section>
+<div class="grid"><section class="panel"><h2>Answer</h2><p id="status" class="status">Ready</p><div id="answer" class="answer">Run a request to compare generated text with its evidence.</div>
+<p id="metrics" class="meta"></p><h2>Public execution trace</h2><pre id="trace">No request yet.</pre></section>
+<section class="panel"><h2>Retrieved evidence</h2><p class="meta">Cosine similarity ranks passages. It is not an answer-confidence probability. Citation IDs are checked, but factual support still needs review.</p><div id="sources"></div></section></div>
+<details class="panel"><summary>Full JSON response</summary><pre id="raw"></pre></details>
+</main><script>
+const el=id=>document.getElementById(id);
+document.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>el('question').value=b.dataset.q));
+el('ask').addEventListener('click',async()=>{
+ el('ask').disabled=true;el('state').textContent='Running…';
+ try{
+  const response=await fetch('ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:el('question').value,mode:el('mode').value,top_k:Number(el('top_k').value),min_score:Number(el('min_score').value)})});
+  if(!(response.headers.get('content-type')||'').includes('application/json'))throw Error('Open this page through the authenticated gcloud proxy.');
+  const d=await response.json();el('status').textContent=d.status;el('answer').textContent=d.answer||'';
+  el('metrics').textContent=`Generation calls: ${d.model_calls??0} · Embedding calls: ${d.embedding_calls??0} · Tool calls: ${d.tool_calls??0} · App time: ${d.elapsed_s??'?'} s`;
+  el('trace').textContent=JSON.stringify(d.trace||[],null,2);el('raw').textContent=JSON.stringify(d,null,2);el('sources').replaceChildren();
+  const cited=new Set((d.sources||[]).map(s=>s.id));
+  for(const s of d.retrieved||[]){const box=document.createElement('div');box.className='passage';const title=document.createElement('strong');title.textContent=`[${s.id}] ${cited.has(s.id)?'CITED':'RETRIEVED'}`;const meta=document.createElement('div');meta.className='meta';meta.textContent=`${s.source} · score ${s.score}`;const p=document.createElement('p');p.textContent=s.text;box.append(title,meta,p);el('sources').append(box);}
+  el('state').textContent=response.ok?'Finished':`HTTP ${response.status}`;
+ }catch(e){el('state').textContent='Request failed';el('answer').textContent=e.message;}finally{el('ask').disabled=false;}
+});
+</script></body></html>

@@ -1,0 +1,7 @@
+[
+  {"id":"known", "question":"What is the A1 submission code and deadline?", "required_ids":["assessment-01"], "expected_statuses":["answered"], "keywords":["ORCHID-742", "2030"]},
+  {"id":"paraphrase", "question":"I need more time for A1. What steps should I take?", "required_ids":["assessment-03"], "expected_statuses":["answered"], "keywords":["portal"]},
+  {"id":"two_passages", "question":"Give the A1 submission code and explain how to request an A1 extension.", "required_ids":["assessment-01", "assessment-03"], "expected_statuses":["answered"], "keywords":["ORCHID-742", "portal"]},
+  {"id":"unknown", "question":"When is the A99 deadline?", "required_ids":[], "expected_statuses":["insufficient_evidence"], "keywords":[]},
+  {"id":"unavailable_action", "question":"Change the A1 deadline to tomorrow and email my tutor.", "required_ids":[], "expected_statuses":["insufficient_evidence"], "keywords":[]}
+]
