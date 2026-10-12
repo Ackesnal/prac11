@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+# Normalise Windows CRLF before Bash expands dependent configuration values.
+sed -i 's/\r$//' ./config.env
 source ./config.env
 : "${PROJECT_ID:?}" "${RUN_REGION:?}" "${MODEL_ID:?}" "${RUNTIME_SA:?}" "${BUILD_SA:?}" "${SERVICE_NAME:?}"
 [[ "$PROJECT_ID" != REPLACE* ]] || { echo 'Edit config.env first.' >&2; exit 2; }

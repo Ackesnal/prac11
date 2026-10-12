@@ -2,6 +2,8 @@
 # Instructor/admin preparation in a dedicated teaching project. Grants IAM roles.
 set -euo pipefail
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+# Normalise Windows CRLF before Bash expands dependent configuration values.
+sed -i 's/\r$//' ./config.env
 source ./config.env
 : "${PROJECT_ID:?}" "${DEPLOYER_EMAIL:?}" "${RUNTIME_SA:?}" "${BUILD_SA:?}"
 [[ "$PROJECT_ID" != REPLACE* && "$DEPLOYER_EMAIL" != REPLACE* ]] || { echo 'Edit config.env first.' >&2; exit 2; }

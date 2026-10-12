@@ -28,7 +28,8 @@ def application(environ, start_response):
     else:
         data = {}
         try:
-            if path == "/healthz" and method == "GET":
+            # Cloud Run reserves some paths ending in z; use /health externally.
+            if path == "/health" and method == "GET":
                 _, retriever = services()
                 data = {"status": "index_ready", "chunks": len(retriever.chunks),
                         "corpus_sha256": retriever.manifest["corpus_sha256"],
